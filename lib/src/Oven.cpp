@@ -50,29 +50,42 @@ void Oven::execAsync(LazyOrm::LazyOrm lazyOrm, const std::function<void(LazyOrm:
 }
 
 LazyOrm::Result Oven::execSync(LazyOrm::LazyOrm lazyOrm){
-    objectThread.getLoop()->runInLoop([lazyOrm]() {
+
+    std::promise<LazyOrm::Result> promise;
+    std::future<LazyOrm::Result> future = promise.get_future();
+
+    objectThread.getLoop()->runInLoop([lazyOrm, &promise]() {
 
         auto dbClientPtr = drogon::app().getDbClient("monitoring");
 
         auto dbms_type = static_cast<LazyOrm::LazyOrm::DBMS_TYPE>(dbClientPtr->type());
 
-        auto drogonOrmResult = dbClientPtr->execSqlSync(lazyOrm.queryString(dbms_type));
+        try {
 
-        size_t columnsSize = drogonOrmResult.columns();
-        LazyOrm::Result lazyOrmResult;
-        for(const auto &row : drogonOrmResult){
-            LazyOrm::ResultRow resultRow;
-            for(int i=0; i<columnsSize; i++){
-                std::string columnName = drogonOrmResult.columnName(i);
-                resultRow.insert(columnName, row[columnName].as<std::string>());
+            auto drogonOrmResult = dbClientPtr->execSqlSync(lazyOrm.queryString(dbms_type));
+
+            size_t columnsSize = drogonOrmResult.columns();
+            LazyOrm::Result lazyOrmResult;
+            for(const auto &row : drogonOrmResult){
+                LazyOrm::ResultRow resultRow;
+                for(int i=0; i<columnsSize; i++){
+                    std::string columnName = drogonOrmResult.columnName(i);
+                    resultRow.insert(columnName, row[columnName].as<std::string>());
+                }
+                lazyOrmResult.push_back(resultRow);
             }
-            lazyOrmResult.push_back(resultRow);
+
+            promise.set_value(lazyOrmResult);
+
+        } catch (const drogon::orm::DrogonDbException &e) {
+            LazyOrm::Result lazyOrmResult;
+            lazyOrmResult.setError(e.base().what());
+            promise.set_value(lazyOrmResult);
         }
 
-        return lazyOrmResult;
     });
 
-    return LazyOrm::Result{};
+    return future.get();
 }
 
 void Oven::func1(){

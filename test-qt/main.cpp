@@ -78,13 +78,13 @@ int main(int argc, char** argv)
 
 
     Oven oven;
-    oven.func2();
+    // oven.func2();
 
-    // QTimer::singleShot(1000, [&oven](){
-    //     test_func_1(&oven);
-    // });
+    QTimer::singleShot(4000, [&oven](){
+        test_func_1(&oven);
+    });
     QTimer::singleShot(1000, [&oven](){
-        // test_func_2(&oven);
+        test_func_2(&oven);
     });
 
     qDebug()<<"a.exec()";
