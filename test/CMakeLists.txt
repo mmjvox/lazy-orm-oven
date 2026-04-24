@@ -22,4 +22,14 @@ add_executable(${PROJECT_NAME} test_main.cc)
 # and comment out the following lines
 target_link_libraries(${PROJECT_NAME} PRIVATE Trantor::Trantor)
 
-add_subdirectory(mariadb_test)
+if (LAZY_ORM_USE_MARIADB)
+    add_subdirectory(mariadb_test)
+endif ()
+
+if (LAZY_ORM_USE_POSTGRES)
+    add_subdirectory(postgres_test)
+endif ()
+
+if (LAZY_ORM_USE_SQLITE3 AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/sqlite_test/CMakeLists.txt")
+    add_subdirectory(sqlite_test)
+endif ()
