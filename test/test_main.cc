@@ -1,18 +1,22 @@
-#include <drogon/drogon.h>
-#include <Oven.h>
+#include <trantor/net/EventLoop.h>
+#include <iostream>
 
-void initMainThread(){
-    drogon::app().run();
-}
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
-    initMainThread();
+    trantor::EventLoop loop;
 
-    Oven oven;
-    // oven.func1();
-    oven.func2();
 
-    // drogon::app().run();
+    // oven.testAsync1(10);
+    // oven.testAsync1(1);
+    // oven.testAsync1(2);
+    // oven.testAsync1(3);
+    // oven.testAsync1(4);
+
+
+    loop.loop();
+
+    std::cout << "exit" << std::endl;
+
     return 0;
 }

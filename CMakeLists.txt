@@ -20,17 +20,27 @@ endif ()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_package(Trantor CONFIG REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MARIADB REQUIRED libmariadb)
+
 include_directories(
     lib/include/
 )
 
-add_library(${PROJECT_NAME} STATIC lib/include/VersionInfo.h
-    lib/include/Oven.h lib/src/Oven.cpp)
+add_library(${PROJECT_NAME} STATIC
+    lib/include/IDbConnection.h
+    lib/src/IDbConnection.cpp
+    lib/include/SqlTask.h
+    lib/src/SqlTask.cpp
+    lib/include/MariadbConnection.h
+    lib/src/MariadbConnection.cpp
+)
 
 
-find_package(Drogon CONFIG REQUIRED)
-find_package(lazyorm CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon ${lazyorm_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${MARIADB_INCLUDE_DIRS})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE Trantor::Trantor ${MARIADB_LIBRARIES})
 
 add_definitions (-DTRANTOR_VERSION="${Trantor_VERSION}")
 
@@ -50,4 +60,3 @@ endif ()
 
 
 add_subdirectory(test)
-add_subdirectory(test-qt)
