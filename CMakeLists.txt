@@ -28,7 +28,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(LAZY_ORM_BUILD_TESTS "Build tests" ON)
 option(LAZY_ORM_USE_MARIADB "Build MariaDB driver" ON)
 option(LAZY_ORM_USE_POSTGRES "Build PostgreSQL driver" ON)
-option(LAZY_ORM_USE_SQLITE3 "Build SQLite3 driver" OFF)
+option(LAZY_ORM_USE_SQLITE3 "Build SQLite3 driver" ON)
 
 # -----------------------------------------------------------------------------
 # CMake modules
