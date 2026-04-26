@@ -5,6 +5,8 @@
 #include <string>
 #include <libpq-fe.h>
 
+namespace LazyOrm {
+
 class PostgresConnection : public IDbConnection
 {
 public:
@@ -39,5 +41,7 @@ private:
     unsigned long long safeToUll(const char* value);
 
 };
+
+}
 
 #endif // POSTGRESCONNECTION_H

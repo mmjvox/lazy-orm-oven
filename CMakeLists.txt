@@ -56,6 +56,7 @@ endif ()
 # Sources
 # -----------------------------------------------------------------------------
 set(LAZY_ORM_PUBLIC_HEADERS
+    lib/include/DataTypes.h
     lib/include/IDbConnection.h
     lib/include/SqlTask.h
 )

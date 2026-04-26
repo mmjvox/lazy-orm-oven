@@ -3,6 +3,8 @@
 #include <iostream>
 #include <trantor/utils/Logger.h>
 
+namespace LazyOrm {
+
 PostgresConnection::PostgresConnection(const std::string& host,
                                        const std::string& user,
                                        const std::string& password,
@@ -209,4 +211,6 @@ unsigned long long PostgresConnection::getLastInsertId()
 
     PQclear(res);
     return lastId;
+}
+
 }

@@ -10,6 +10,8 @@
 #include <mysql/mysql.h>
 #endif
 
+namespace LazyOrm {
+
 using MariaDB = MYSQL;
 
 class MariadbConnection : public IDbConnection
@@ -48,5 +50,7 @@ private:
     uint mReadTimeOut = 60;
     uint mWriteTimeOut = 60;
 };
+
+}
 
 #endif // MARIADBCONNECTION_H

@@ -1,6 +1,8 @@
 #include "SqliteConnection.h"
 #include <trantor/utils/Logger.h>
 
+namespace LazyOrm {
+
 SqliteConnection::SqliteConnection(const std::string& databasePath, bool wallMode)
 : mDatabasePath(databasePath)
 , mWallMode(wallMode)
@@ -179,4 +181,6 @@ void SqliteConnection::setBusyTimeout(int milliseconds)
 void SqliteConnection::setReadOnly(bool readOnly)
 {
     mReadOnly = readOnly;
+}
+
 }

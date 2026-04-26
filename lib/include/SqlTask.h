@@ -3,6 +3,8 @@
 
 #include <string>
 
+namespace LazyOrm {
+
 class SqlTask
 {
 public:
@@ -15,5 +17,7 @@ public:
 private:
     std::string mSql;
 };
+
+}
 
 #endif // SQLTASK_H

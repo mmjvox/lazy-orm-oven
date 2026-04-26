@@ -3,6 +3,7 @@
 
 #include "SqlTask.h"
 
+namespace LazyOrm {
 
 class IDbConnection
 {
@@ -30,8 +31,8 @@ public:
     virtual unsigned long long getLastInsertId() = 0;
 
     std::string getLastError() const;
-
-
 };
+
+}
 
 #endif // IDBCONNECTION_H

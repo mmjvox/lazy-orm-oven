@@ -5,6 +5,8 @@
 #include <sqlite3.h>
 #include <string>
 
+namespace LazyOrm {
+
 class SqliteConnection : public IDbConnection
 {
 public:
@@ -30,5 +32,7 @@ private:
     int mBusyTimeoutMs;
     sqlite3_stmt* mCurrentStmt;
 };
+
+}
 
 #endif // SQLITECONNECTION_H

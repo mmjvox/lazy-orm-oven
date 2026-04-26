@@ -2,6 +2,8 @@
 #include <iostream>
 #include <trantor/utils/Logger.h>
 
+namespace LazyOrm {
+
 MariadbConnection::MariadbConnection(const std::string& host,
                                      const std::string& user,
                                      const std::string& password,
@@ -179,4 +181,6 @@ unsigned long long MariadbConnection::getLastInsertId()
 {
     if (!mMariadb) return 0;
     return mysql_insert_id(mMariadb);
+}
+
 }
