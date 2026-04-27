@@ -25,7 +25,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # -----------------------------------------------------------------------------
 # Build options
 # -----------------------------------------------------------------------------
-option(LAZY_ORM_BUILD_TESTS "Build tests" ON)
+option(LAZY_ORM_OVEN_BUILD_TESTS "Build tests" ON)
 option(LAZY_ORM_USE_MARIADB "Build MariaDB driver" ON)
 option(LAZY_ORM_USE_POSTGRES "Build PostgreSQL driver" ON)
 option(LAZY_ORM_USE_SQLITE3 "Build SQLite3 driver" ON)
@@ -56,7 +56,6 @@ endif ()
 # Sources
 # -----------------------------------------------------------------------------
 set(LAZY_ORM_PUBLIC_HEADERS
-    lib/include/DataTypes.h
     lib/include/IDbConnection.h
     lib/include/SqlTask.h
 )
@@ -152,6 +151,6 @@ message(STATUS "lazy-orm-oven SQLite3 driver: ${LAZY_ORM_USE_SQLITE3}")
 
 # aux_source_directory(plugins PLUGIN_SRC)
 
-if (LAZY_ORM_BUILD_TESTS)
+if (LAZY_ORM_OVEN_BUILD_TESTS)
     add_subdirectory(test)
-endif ()
+endif (LAZY_ORM_OVEN_BUILD_TESTS)
