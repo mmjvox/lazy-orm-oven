@@ -10,6 +10,7 @@
 #include <mutex>
 
 using namespace std::chrono_literals;
+using namespace LazyOrm;
 
 // Global mutex for thread-safe database setup
 static std::mutex dbSetupMutex;

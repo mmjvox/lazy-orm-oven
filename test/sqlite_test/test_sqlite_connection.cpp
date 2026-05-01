@@ -10,6 +10,7 @@
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
+using namespace LazyOrm;
 
 // Helper function to create a test connection (temporary file)
 SqliteConnection createTestConnection(bool wallMode = false) {

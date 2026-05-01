@@ -3,6 +3,8 @@
 
 #include "IDbConnection.h"
 #include <string>
+#include "Result.h"
+#include <memory>
 
 #ifdef LIBMARIADB
 #include <mariadb/mysql.h>

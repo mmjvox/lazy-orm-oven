@@ -8,6 +8,7 @@
 #include <memory>
 
 using namespace std::chrono_literals;
+using namespace LazyOrm;
 
 // Helper function to create a test connection
 MariadbConnection createTestConnection() {

@@ -1,4 +1,6 @@
 #include "PostgresConnection.h"
+#include "LazyOrm/Result.h"
+#include "LazyOrm/ResultRow.h"
 #include <charconv>
 #include <iostream>
 #include <trantor/utils/Logger.h>
@@ -123,25 +125,26 @@ IDbConnection::QueryState PostgresConnection::exec(const SqlTask& task)
 
         // Handle SELECT queries that return data
         if (status == PGRES_TUPLES_OK) {
-            int rows = PQntuples(res);
-            int cols = PQnfields(res);
+            const int rows = PQntuples(res);
+            const int cols = PQnfields(res);
 
             // Print results (for debugging)
             std::cout << "Query executed successfully. " << rows << " row(s) returned." << std::endl;
 
-            // Print column headers
-            for (int i = 0; i < cols; i++) {
-                std::cout << PQfname(res, i) << "\t";
-            }
-            std::cout << std::endl;
+
+            std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
 
             // Print data rows
             for (int i = 0; i < rows; i++) {
+                ResultRow resultRow;
                 for (int j = 0; j < cols; j++) {
-                    std::cout << (PQgetvalue(res, i, j) ? PQgetvalue(res, i, j) : "NULL") << "\t";
+                    const auto &value = PQgetvalue(res, i, j);
+                    resultRow.insert(PQfname(res, i), ( value? value : "null"));
                 }
-                std::cout << std::endl;
+                lazyOrmResult->push_back(resultRow);
             }
+
+            std::cout << lazyOrmResult->toIndentedString() << std::endl;
 
             PQclear(res);
             return IDbConnection::QuerySuccess;

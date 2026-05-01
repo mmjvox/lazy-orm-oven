@@ -26,9 +26,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Build options
 # -----------------------------------------------------------------------------
 option(LAZY_ORM_OVEN_BUILD_TESTS "Build tests" ON)
-option(LAZY_ORM_USE_MARIADB "Build MariaDB driver" ON)
-option(LAZY_ORM_USE_POSTGRES "Build PostgreSQL driver" ON)
-option(LAZY_ORM_USE_SQLITE3 "Build SQLite3 driver" ON)
+option(LAZY_ORM_OVEN_USE_MARIADB "Build MariaDB driver" ON)
+option(LAZY_ORM_OVEN_USE_POSTGRES "Build PostgreSQL driver" ON)
+option(LAZY_ORM_OVEN_USE_SQLITE3 "Build SQLite3 driver" ON)
 
 # -----------------------------------------------------------------------------
 # CMake modules
@@ -38,88 +38,97 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 # -----------------------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------------------
+
+add_subdirectory(lazy-variant)
+
+include_directories(
+    lazy-variant/include
+    include/
+)
+
 find_package(Trantor CONFIG REQUIRED)
 
-if (LAZY_ORM_USE_MARIADB)
+if (LAZY_ORM_OVEN_USE_MARIADB)
     find_package(MariaDB REQUIRED)
 endif ()
 
-if (LAZY_ORM_USE_POSTGRES)
+if (LAZY_ORM_OVEN_USE_POSTGRES)
     find_package(pg REQUIRED)
 endif ()
 
-if (LAZY_ORM_USE_SQLITE3)
+if (LAZY_ORM_OVEN_USE_SQLITE3)
     find_package(SQLite3 REQUIRED)
 endif ()
 
 # -----------------------------------------------------------------------------
 # Sources
 # -----------------------------------------------------------------------------
-set(LAZY_ORM_PUBLIC_HEADERS
+set(LAZY_ORM_OVEN_PUBLIC_HEADERS
     lib/include/IDbConnection.h
     lib/include/SqlTask.h
 )
 
-set(LAZY_ORM_SOURCES
+set(LAZY_ORM_OVEN_SOURCES
     lib/src/IDbConnection.cpp
     lib/src/SqlTask.cpp
 )
 
-set(LAZY_ORM_LIBRARIES
+set(LAZY_ORM_OVEN_LIBRARY_DEPS
     Trantor::Trantor
+    lazyvariant
 )
 
-if (LAZY_ORM_USE_MARIADB)
-    list(APPEND LAZY_ORM_PUBLIC_HEADERS
+if (LAZY_ORM_OVEN_USE_MARIADB)
+    list(APPEND LAZY_ORM_OVEN_PUBLIC_HEADERS
         lib/include/MariadbConnection.h
     )
 
-    list(APPEND LAZY_ORM_SOURCES
+    list(APPEND LAZY_ORM_OVEN_SOURCES
         lib/src/MariadbConnection.cpp
     )
 
-    list(APPEND LAZY_ORM_LIBRARIES
+    list(APPEND LAZY_ORM_OVEN_LIBRARY_DEPS
         MariaDB_lib
     )
 
-    add_definitions(-DLAZY_ORM_USE_MARIADB)
+    add_definitions(-DLAZY_ORM_OVEN_USE_MARIADB)
 endif ()
 
-if (LAZY_ORM_USE_POSTGRES)
-    list(APPEND LAZY_ORM_PUBLIC_HEADERS
+if (LAZY_ORM_OVEN_USE_POSTGRES)
+    list(APPEND LAZY_ORM_OVEN_PUBLIC_HEADERS
         lib/include/PostgresConnection.h
     )
 
-    list(APPEND LAZY_ORM_SOURCES
+    list(APPEND LAZY_ORM_OVEN_SOURCES
         lib/src/PostgresConnection.cpp
     )
 
-    list(APPEND LAZY_ORM_LIBRARIES
+    list(APPEND LAZY_ORM_OVEN_LIBRARY_DEPS
         pg_lib
     )
 
-    add_definitions(-DLAZY_ORM_USE_POSTGRES)
+    add_definitions(-DLAZY_ORM_OVEN_USE_POSTGRES)
 endif ()
 
-if (LAZY_ORM_USE_SQLITE3)
-    list(APPEND LAZY_ORM_PUBLIC_HEADERS
+if (LAZY_ORM_OVEN_USE_SQLITE3)
+    list(APPEND LAZY_ORM_OVEN_PUBLIC_HEADERS
         lib/include/SqliteConnection.h
     )
 
-    list(APPEND LAZY_ORM_SOURCES
+    list(APPEND LAZY_ORM_OVEN_SOURCES
         lib/src/SqliteConnection.cpp
     )
 
-    list(APPEND LAZY_ORM_LIBRARIES
+    list(APPEND LAZY_ORM_OVEN_LIBRARY_DEPS
         SQLite3_lib
     )
 
-    add_definitions(-DLAZY_ORM_USE_SQLITE3)
+    add_definitions(-DLAZY_ORM_OVEN_USE_SQLITE3)
 endif ()
 
 add_library(${PROJECT_NAME} STATIC
-    ${LAZY_ORM_PUBLIC_HEADERS}
-    ${LAZY_ORM_SOURCES}
+    ${LAZY_ORM_OVEN_PUBLIC_HEADERS}
+    ${LAZY_ORM_OVEN_SOURCES}
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -130,7 +139,7 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        ${LAZY_ORM_LIBRARIES}
+        ${LAZY_ORM_OVEN_LIBRARY_DEPS}
 )
 
 add_definitions(-DTRANTOR_VERSION="${Trantor_VERSION}")
@@ -145,9 +154,9 @@ else ()
     message(STATUS "use c++20")
 endif ()
 
-message(STATUS "lazy-orm-oven MariaDB driver: ${LAZY_ORM_USE_MARIADB}")
-message(STATUS "lazy-orm-oven PostgreSQL driver: ${LAZY_ORM_USE_POSTGRES}")
-message(STATUS "lazy-orm-oven SQLite3 driver: ${LAZY_ORM_USE_SQLITE3}")
+message(STATUS "lazy-orm-oven MariaDB driver: ${LAZY_ORM_OVEN_USE_MARIADB}")
+message(STATUS "lazy-orm-oven PostgreSQL driver: ${LAZY_ORM_OVEN_USE_POSTGRES}")
+message(STATUS "lazy-orm-oven SQLite3 driver: ${LAZY_ORM_OVEN_USE_SQLITE3}")
 
 # aux_source_directory(plugins PLUGIN_SRC)
 

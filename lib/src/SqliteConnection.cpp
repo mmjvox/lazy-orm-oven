@@ -1,4 +1,6 @@
 #include "SqliteConnection.h"
+#include "LazyOrm/Result.h"
+#include "LazyOrm/ResultRow.h"
 #include <trantor/utils/Logger.h>
 
 namespace LazyOrm {
@@ -103,18 +105,24 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
         return IDbConnection::QueryFailed;
     }
 
-    int columnCount = sqlite3_column_count(mCurrentStmt);
+    const int columnCount = sqlite3_column_count(mCurrentStmt);
+    const bool isSelectQuery = (columnCount > 0);
 
-    while ((rc = sqlite3_step(mCurrentStmt)) == SQLITE_ROW) {
-        // فعلاً فقط rowها را مصرف می‌کنیم.
-        // برای SELECT/PRAGMA نباید وجود row باعث failure شود.
-        for (int i = 0; i < columnCount; ++i) {
-            const char* text =
-                reinterpret_cast<const char*>(sqlite3_column_text(mCurrentStmt, i));
+    std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
 
-            LOG_TRACE << "SQLite column[" << i << "]: " << (text ? text : "NULL");
+    if(isSelectQuery){
+        while ((rc = sqlite3_step(mCurrentStmt)) == SQLITE_ROW) {
+            ResultRow resultRow;
+            for (int i = 0; i < columnCount; ++i) {
+                const char* colName = sqlite3_column_name(mCurrentStmt, i);
+                const char* text = reinterpret_cast<const char*>(sqlite3_column_text(mCurrentStmt, i));
+                resultRow.insert((colName ? colName : "Unknown"), ( text? text : "null"));
+            }
+            lazyOrmResult->push_back(resultRow);
         }
     }
+
+    std::cout << lazyOrmResult->toIndentedString() << std::endl;
 
     if (rc != SQLITE_DONE) {
         mLastError = "Query execution failed: " + std::string(sqlite3_errmsg(mDb));

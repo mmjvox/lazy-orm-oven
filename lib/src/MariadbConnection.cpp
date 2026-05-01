@@ -1,4 +1,6 @@
 #include "MariadbConnection.h"
+#include "LazyOrm/Result.h"
+#include "LazyOrm/ResultRow.h"
 #include <iostream>
 #include <trantor/utils/Logger.h>
 
@@ -123,17 +125,22 @@ IDbConnection::QueryState MariadbConnection::exec(const SqlTask& task)
     MYSQL_RES* result = mysql_store_result(mMariadb);
     if (result) {
         // Get column count
-        int numFields = mysql_num_fields(result);
+        const int numFields = mysql_num_fields(result);
+        MYSQL_FIELD* fields = mysql_fetch_fields(result);
         MYSQL_ROW row;
 
-        // Print results (for debugging)
-        std::cout << "Query executed successfully. Results:" << std::endl;
+        std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
+
         while ((row = mysql_fetch_row(result))) {
+            ResultRow resultRow;
             for (int i = 0; i < numFields; i++) {
-                std::cout << (row[i] ? row[i] : "NULL") << "\t";
+                const auto &value = row[i];
+                resultRow.insert(fields[i].name, ( value? value : "null"));
             }
-            std::cout << std::endl;
+            lazyOrmResult->push_back(resultRow);
         }
+
+        std::cout << lazyOrmResult->toIndentedString() << std::endl;
 
         mysql_free_result(result);
         return IDbConnection::QuerySuccess;
