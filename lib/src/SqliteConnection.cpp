@@ -111,12 +111,35 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
     std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
 
     if(isSelectQuery){
+
+        std::vector<std::pair<std::string, int>> columnNamesTypes;
+        for (int i = 0; i < columnCount; ++i) {
+            const char* colName = sqlite3_column_name(mCurrentStmt, i);
+            const auto type = sqlite3_column_type(mCurrentStmt, i);
+            columnNamesTypes.push_back(std::make_pair((colName ? colName : "Unknown"), type));
+        }
+
+
         while ((rc = sqlite3_step(mCurrentStmt)) == SQLITE_ROW) {
             ResultRow resultRow;
             for (int i = 0; i < columnCount; ++i) {
-                const char* colName = sqlite3_column_name(mCurrentStmt, i);
+                const auto &colName = columnNamesTypes[i].first;
                 const char* text = reinterpret_cast<const char*>(sqlite3_column_text(mCurrentStmt, i));
-                resultRow.insert((colName ? colName : "Unknown"), ( text? text : "null"));
+                DbVariant value = text;
+                switch (columnNamesTypes[i].second) {
+                    case SQLITE_INTEGER:
+                        resultRow.insert(colName, value.toLongLong());
+                    case SQLITE_FLOAT:
+                        resultRow.insert(colName, value.toLongDouble());
+                    case SQLITE_TEXT:
+                        resultRow.insert(colName, value.toString());
+                    case SQLITE_BLOB:
+                        resultRow.insert(colName, value.toBlob());
+                    case SQLITE_NULL:
+                        resultRow.insert(colName, "NULL");
+                    default:
+                        resultRow.insert(colName, "UNKNOWN");
+                }
             }
             lazyOrmResult->push_back(resultRow);
         }
