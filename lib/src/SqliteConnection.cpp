@@ -112,21 +112,24 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
 
     if(isSelectQuery){
 
-        std::vector<std::pair<std::string, int>> columnNamesTypes;
+        std::vector<std::string> columnNames;
+        std::vector<int> columnTypes;
         for (int i = 0; i < columnCount; ++i) {
             const char* colName = sqlite3_column_name(mCurrentStmt, i);
             const auto type = sqlite3_column_type(mCurrentStmt, i);
-            columnNamesTypes.push_back(std::make_pair((colName ? colName : "Unknown"), type));
+            columnNames.push_back(colName ? colName : "Unknown");
+            columnTypes.push_back(type);
         }
 
+        lazyOrmResult->setColumnNames(columnNames);
 
         while ((rc = sqlite3_step(mCurrentStmt)) == SQLITE_ROW) {
             ResultRow resultRow;
             for (int i = 0; i < columnCount; ++i) {
-                const auto &colName = columnNamesTypes[i].first;
+                const auto &colName = columnNames[i];
                 const char* text = reinterpret_cast<const char*>(sqlite3_column_text(mCurrentStmt, i));
                 DbVariant value = text;
-                switch (columnNamesTypes[i].second) {
+                switch (columnTypes[i]) {
                     case SQLITE_INTEGER:
                         resultRow.insert(colName, value.toLongLong());
                     case SQLITE_FLOAT:
@@ -149,6 +152,7 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
 
     if (rc != SQLITE_DONE) {
         mLastError = "Query execution failed: " + std::string(sqlite3_errmsg(mDb));
+        lazyOrmResult->setError(mLastError);
         LOG_ERROR << mLastError;
         LOG_ERROR << "SQL: " << sql;
 
@@ -158,6 +162,8 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
     }
 
     mAffectedRows = sqlite3_changes(mDb);
+    lazyOrmResult->setAffectedRows(mAffectedRows);
+    lazyOrmResult->setInsertId(getLastInsertId());
 
     sqlite3_finalize(mCurrentStmt);
     mCurrentStmt = nullptr;

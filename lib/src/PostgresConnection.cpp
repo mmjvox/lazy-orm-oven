@@ -131,6 +131,16 @@ IDbConnection::QueryState PostgresConnection::exec(const SqlTask& task)
             // Print results (for debugging)
             std::cout << "Query executed successfully. " << rows << " row(s) returned." << std::endl;
 
+            std::vector<std::string> columnNames;
+            std::vector<int> columnTypes;
+            for (int i = 0; i < columnCount; ++i) {
+                const char* colName = sqlite3_column_name(mCurrentStmt, i);
+                const auto type = sqlite3_column_type(mCurrentStmt, i);
+                columnNames.push_back(colName ? colName : "Unknown");
+                columnTypes.push_back(type);
+            }
+
+            lazyOrmResult->setColumnNames(columnNames);
 
             std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
 
