@@ -1,6 +1,6 @@
 #include "MariadbConnection.h"
-#include "LazyOrm/Result.h"
-#include "LazyOrm/ResultRow.h"
+#include "LazyVariant/Result.h"
+#include "LazyVariant/ResultRow.h"
 #include <iostream>
 #include <trantor/utils/Logger.h>
 
@@ -121,22 +121,118 @@ IDbConnection::QueryState MariadbConnection::exec(const SqlTask& task)
         return IDbConnection::QueryFailed;
     }
 
+    std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
+
     // For SELECT queries, store the result
     MYSQL_RES* result = mysql_store_result(mMariadb);
     if (result) {
         // Get column count
-        const int numFields = mysql_num_fields(result);
+        const int columnsCount = mysql_num_fields(result);
         MYSQL_FIELD* fields = mysql_fetch_fields(result);
-        MYSQL_ROW row;
 
-        std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
+        std::vector<std::string> columnNames;
+        for (int i = 0; i < columnsCount; ++i) {
+            columnNames.push_back(fields[i].name);
+        }
+
+        lazyOrmResult->setColumnNames(columnNames);
+
+        MYSQL_ROW row;
+        unsigned long* lengths = nullptr;
 
         while ((row = mysql_fetch_row(result))) {
+            lengths = mysql_fetch_lengths(result);
+
             ResultRow resultRow;
-            for (int i = 0; i < numFields; i++) {
-                const auto &value = row[i];
-                resultRow.insert(fields[i].name, ( value? value : "null"));
+
+            for (int i = 0; i < columnsCount; ++i) {
+                const std::string& columnName = columnNames[i];
+
+                if (!row[i]) {
+                    resultRow.insert(columnName, DbVariant{});
+                    continue;
+                }
+
+                DbVariant value = std::string(row[i], lengths[i]);
+                const bool isUnsigned = fields[i].flags & UNSIGNED_FLAG;
+
+                switch (fields[i].type) {
+                case MYSQL_TYPE_TINY:
+                case MYSQL_TYPE_SHORT:
+                case MYSQL_TYPE_LONG:
+                case MYSQL_TYPE_INT24:
+                case MYSQL_TYPE_LONGLONG:
+                case MYSQL_TYPE_YEAR:
+                    if (isUnsigned) {
+                        resultRow.insert(columnName, value.toULongLong());
+                    } else {
+                        resultRow.insert(columnName, value.toLongLong());
+                    }
+                    break;
+
+                case MYSQL_TYPE_FLOAT:
+                case MYSQL_TYPE_DOUBLE:
+                    resultRow.insert(columnName, value.toLongDouble());
+                    break;
+
+                case MYSQL_TYPE_DECIMAL:
+                case MYSQL_TYPE_NEWDECIMAL:
+                    resultRow.insert(columnName, value);
+                    break;
+
+                case MYSQL_TYPE_NULL:
+                    resultRow.insert(columnName, DbVariant{});
+                    break;
+
+                case MYSQL_TYPE_BIT:
+                    resultRow.insert(columnName, value);
+                    break;
+
+                case MYSQL_TYPE_DATE:
+                case MYSQL_TYPE_TIME:
+                case MYSQL_TYPE_DATETIME:
+                case MYSQL_TYPE_TIMESTAMP:
+                case MYSQL_TYPE_NEWDATE:
+                case MYSQL_TYPE_TIMESTAMP2:
+                case MYSQL_TYPE_DATETIME2:
+                case MYSQL_TYPE_TIME2:
+                    resultRow.insert(columnName, value);
+                    break;
+
+                case MYSQL_TYPE_JSON:
+                case MYSQL_TYPE_ENUM:
+                case MYSQL_TYPE_SET:
+                case MYSQL_TYPE_VARCHAR:
+                case MYSQL_TYPE_VAR_STRING:
+                case MYSQL_TYPE_STRING:
+                    resultRow.insert(columnName, value);
+                    break;
+
+                case MYSQL_TYPE_TINY_BLOB:
+                case MYSQL_TYPE_MEDIUM_BLOB:
+                case MYSQL_TYPE_LONG_BLOB:
+                case MYSQL_TYPE_BLOB:
+                case MYSQL_TYPE_GEOMETRY: {
+                    BlobType blob;
+                    blob.reserve(lengths[i]);
+
+                    const unsigned char* raw =
+                        reinterpret_cast<const unsigned char*>(row[i]);
+
+                    for (unsigned long j = 0; j < lengths[i]; ++j) {
+                        blob.push_back(static_cast<ByteType>(raw[j]));
+                    }
+
+                    resultRow.insert(columnName, blob);
+                    break;
+                }
+
+                default:
+                    resultRow.insert(columnName, value);
+                    break;
+                }
             }
+
             lazyOrmResult->push_back(resultRow);
         }
 
@@ -149,12 +245,15 @@ IDbConnection::QueryState MariadbConnection::exec(const SqlTask& task)
         // For INSERT, UPDATE, DELETE queries
         if (mysql_field_count(mMariadb) == 0) {
             mAffectedRows = mysql_affected_rows(mMariadb);
+            lazyOrmResult->setAffectedRows(mAffectedRows);
+            lazyOrmResult->setInsertId(getLastInsertId());
             LOG_INFO << "Query executed successfully. Affected rows: " << mAffectedRows;
             return IDbConnection::QuerySuccess;
         }
         else {
             // Some error occurred
             mLastError = "Failed to store result: " + std::string{mysql_error(mMariadb)};
+            lazyOrmResult->setError(mLastError);
             LOG_ERROR << mLastError;
             return IDbConnection::QueryFailed;
         }

@@ -1,6 +1,6 @@
 #include "SqliteConnection.h"
-#include "LazyOrm/Result.h"
-#include "LazyOrm/ResultRow.h"
+#include "LazyVariant/Result.h"
+#include "LazyVariant/ResultRow.h"
 #include <trantor/utils/Logger.h>
 
 namespace LazyOrm {
@@ -105,8 +105,8 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
         return IDbConnection::QueryFailed;
     }
 
-    const int columnCount = sqlite3_column_count(mCurrentStmt);
-    const bool isSelectQuery = (columnCount > 0);
+    const int columnsCount = sqlite3_column_count(mCurrentStmt);
+    const bool isSelectQuery = (columnsCount > 0);
 
     std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
 
@@ -114,7 +114,7 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
 
         std::vector<std::string> columnNames;
         std::vector<int> columnTypes;
-        for (int i = 0; i < columnCount; ++i) {
+        for (int i = 0; i < columnsCount; ++i) {
             const char* colName = sqlite3_column_name(mCurrentStmt, i);
             const auto type = sqlite3_column_type(mCurrentStmt, i);
             columnNames.push_back(colName ? colName : "Unknown");
@@ -125,21 +125,26 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
 
         while ((rc = sqlite3_step(mCurrentStmt)) == SQLITE_ROW) {
             ResultRow resultRow;
-            for (int i = 0; i < columnCount; ++i) {
+            for (int i = 0; i < columnsCount; ++i) {
                 const auto &colName = columnNames[i];
                 const char* text = reinterpret_cast<const char*>(sqlite3_column_text(mCurrentStmt, i));
                 DbVariant value = text;
                 switch (columnTypes[i]) {
                     case SQLITE_INTEGER:
                         resultRow.insert(colName, value.toLongLong());
+                        break;
                     case SQLITE_FLOAT:
                         resultRow.insert(colName, value.toLongDouble());
+                        break;
                     case SQLITE_TEXT:
                         resultRow.insert(colName, value.toString());
+                        break;
                     case SQLITE_BLOB:
                         resultRow.insert(colName, value.toBlob());
+                        break;
                     case SQLITE_NULL:
                         resultRow.insert(colName, "NULL");
+                        break;
                     default:
                         resultRow.insert(colName, "UNKNOWN");
                 }
