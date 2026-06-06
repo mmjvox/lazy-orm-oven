@@ -66,11 +66,16 @@ endif ()
 set(LAZY_ORM_OVEN_PUBLIC_HEADERS
     lib/include/IDbConnection.h
     lib/include/SqlTask.h
+    lib/include/WorkerContext.h
+    lib/include/DbExecutor.h
+    lib/include/DbConfigs.h
 )
 
 set(LAZY_ORM_OVEN_SOURCES
     lib/src/IDbConnection.cpp
     lib/src/SqlTask.cpp
+    lib/src/WorkerContext.cpp
+    lib/src/DbExecutor.cpp
 )
 
 set(LAZY_ORM_OVEN_LIBRARY_DEPS

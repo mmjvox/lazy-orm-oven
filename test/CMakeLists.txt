@@ -20,7 +20,7 @@ add_executable(${PROJECT_NAME} test_main.cc)
 # target_link_libraries(${PROJECT_NAME} PRIVATE drogon)
 #
 # and comment out the following lines
-target_link_libraries(${PROJECT_NAME} PRIVATE Trantor::Trantor)
+target_link_libraries(${PROJECT_NAME} PRIVATE Trantor::Trantor lazy-orm-oven)
 
 if (LAZY_ORM_USE_MARIADB)
     add_subdirectory(mariadb_test)

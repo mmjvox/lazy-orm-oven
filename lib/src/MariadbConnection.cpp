@@ -98,19 +98,23 @@ bool MariadbConnection::connect()
     return true;
 }
 
-IDbConnection::QueryState MariadbConnection::exec(const SqlTask& task)
+std::shared_ptr<Result> MariadbConnection::exec(const SqlTask& task)
 {
+    std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
+
     if (!mConnected || !mMariadb) {
         mLastError = "Cannot execute query: Not connected to database";
         LOG_ERROR << mLastError;
-        return IDbConnection::UndefinedQuery;
+        lazyOrmResult->setQueryState(LazyOrm::UndefinedQuery);
+        return lazyOrmResult;
     }
 
     const std::string& sql = task.getSqlQuery();
     if (sql.empty()) {
         mLastError = "Cannot execute empty query";
         LOG_ERROR << mLastError;
-        return IDbConnection::UndefinedQuery;
+        lazyOrmResult->setQueryState(LazyOrm::UndefinedQuery);
+        return lazyOrmResult;
     }
 
     // Execute the query
@@ -118,10 +122,10 @@ IDbConnection::QueryState MariadbConnection::exec(const SqlTask& task)
         mLastError = "Query execution failed: " + std::string{mysql_error(mMariadb)};
         LOG_ERROR << mLastError;
         LOG_ERROR << "SQL: " << sql;
-        return IDbConnection::QueryFailed;
+        lazyOrmResult->setQueryState(LazyOrm::QueryFailed);
+        return lazyOrmResult;
     }
 
-    std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
 
     // For SELECT queries, store the result
     MYSQL_RES* result = mysql_store_result(mMariadb);
@@ -239,7 +243,8 @@ IDbConnection::QueryState MariadbConnection::exec(const SqlTask& task)
         std::cout << lazyOrmResult->toIndentedString() << std::endl;
 
         mysql_free_result(result);
-        return IDbConnection::QuerySuccess;
+        lazyOrmResult->setQueryState(LazyOrm::QuerySuccess);
+        return lazyOrmResult;
     }
     else {
         // For INSERT, UPDATE, DELETE queries
@@ -248,14 +253,16 @@ IDbConnection::QueryState MariadbConnection::exec(const SqlTask& task)
             lazyOrmResult->setAffectedRows(mAffectedRows);
             lazyOrmResult->setInsertId(getLastInsertId());
             LOG_INFO << "Query executed successfully. Affected rows: " << mAffectedRows;
-            return IDbConnection::QuerySuccess;
+            lazyOrmResult->setQueryState(LazyOrm::QuerySuccess);
+            return lazyOrmResult;
         }
         else {
             // Some error occurred
             mLastError = "Failed to store result: " + std::string{mysql_error(mMariadb)};
             lazyOrmResult->setError(mLastError);
             LOG_ERROR << mLastError;
-            return IDbConnection::QueryFailed;
+            lazyOrmResult->setQueryState(LazyOrm::QueryFailed);
+            return lazyOrmResult;
         }
     }
 }

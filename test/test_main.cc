@@ -1,20 +1,15 @@
 #include <trantor/net/EventLoop.h>
 #include <iostream>
+#include "DbExecutor.h"
 
 
 int main(int argc, char** argv)
 {
     trantor::EventLoop loop;
 
+    LazyOrm::DbExecutor exec(&loop);
 
-    // oven.testAsync1(10);
-    // oven.testAsync1(1);
-    // oven.testAsync1(2);
-    // oven.testAsync1(3);
-    // oven.testAsync1(4);
-
-
-    loop.loop();
+    exec.start(8);
 
     std::cout << "exit" << std::endl;
 

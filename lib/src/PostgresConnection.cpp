@@ -190,19 +190,23 @@ bool PostgresConnection::connect()
     return true;
 }
 
-IDbConnection::QueryState PostgresConnection::exec(const SqlTask& task)
+std::shared_ptr<Result> PostgresConnection::exec(const SqlTask& task)
 {
+    std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
+
     if (!mConnected || !mPgConn) {
         mLastError = "Cannot execute query: Not connected to database";
         LOG_ERROR << mLastError;
-        return IDbConnection::UndefinedQuery;
+        lazyOrmResult->setQueryState(LazyOrm::UndefinedQuery);
+        return lazyOrmResult;
     }
 
     const std::string& sql = task.getSqlQuery();
     if (sql.empty()) {
         mLastError = "Cannot execute empty query";
         LOG_ERROR << mLastError;
-        return IDbConnection::UndefinedQuery;
+        lazyOrmResult->setQueryState(LazyOrm::UndefinedQuery);
+        return lazyOrmResult;
     }
 
     // Execute the query
@@ -211,7 +215,8 @@ IDbConnection::QueryState PostgresConnection::exec(const SqlTask& task)
     if (!res) {
         mLastError = "Query execution failed: PQexec returned null: " + std::string(PQerrorMessage(mPgConn));
         LOG_ERROR << mLastError;
-        return IDbConnection::QueryFailed;
+        lazyOrmResult->setQueryState(LazyOrm::QueryFailed);
+        return lazyOrmResult;
     }
 
     // Check for errors
@@ -222,7 +227,8 @@ IDbConnection::QueryState PostgresConnection::exec(const SqlTask& task)
         LOG_ERROR << mLastError;
         LOG_ERROR << "SQL: " << sql;
         PQclear(res);
-        return IDbConnection::QueryFailed;
+        lazyOrmResult->setQueryState(LazyOrm::QueryFailed);
+        return lazyOrmResult;
     }
 
         // Handle SELECT queries that return data
@@ -232,8 +238,6 @@ IDbConnection::QueryState PostgresConnection::exec(const SqlTask& task)
 
             // Print results (for debugging)
             std::cout << "Query executed successfully. " << rowsCount << " row(s) returned." << std::endl;
-
-            std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
 
             std::vector<std::string> columnNames;
             std::vector<Oid> columnTypes;
@@ -429,7 +433,8 @@ IDbConnection::QueryState PostgresConnection::exec(const SqlTask& task)
             std::cout << lazyOrmResult->toIndentedString() << std::endl;
 
             PQclear(res);
-            return IDbConnection::QuerySuccess;
+            lazyOrmResult->setQueryState(LazyOrm::QuerySuccess);
+            return lazyOrmResult;
         }
 
         // Handle INSERT, UPDATE, DELETE, etc.
@@ -438,11 +443,13 @@ IDbConnection::QueryState PostgresConnection::exec(const SqlTask& task)
             mAffectedRows = safeToUll(PQcmdTuples(res));
             LOG_INFO << "Query executed successfully. Affected rows: " << mAffectedRows;
             PQclear(res);
-            return IDbConnection::QuerySuccess;
+            lazyOrmResult->setQueryState(LazyOrm::QuerySuccess);
+            return lazyOrmResult;
         }
 
         PQclear(res);
-        return IDbConnection::QueryFailed;
+        lazyOrmResult->setQueryState(LazyOrm::QueryFailed);
+        return lazyOrmResult;
 }
 
 void PostgresConnection::close()

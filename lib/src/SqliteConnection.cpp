@@ -75,19 +75,23 @@ bool SqliteConnection::connect()
     return true;
 }
 
-IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
+std::shared_ptr<Result> SqliteConnection::exec(const SqlTask& task)
 {
+    std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
+
     if (!mConnected || !mDb) {
         mLastError = "Cannot execute query: Not connected to database";
         LOG_ERROR << mLastError;
-        return IDbConnection::UndefinedQuery;
+        lazyOrmResult->setQueryState(LazyOrm::UndefinedQuery);
+        return lazyOrmResult;
     }
 
     const std::string& sql = task.getSqlQuery();
     if (sql.empty()) {
         mLastError = "Cannot execute empty query";
         LOG_ERROR << mLastError;
-        return IDbConnection::UndefinedQuery;
+        lazyOrmResult->setQueryState(LazyOrm::UndefinedQuery);
+        return lazyOrmResult;
     }
 
     if (mCurrentStmt) {
@@ -102,13 +106,12 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
         mLastError = "Failed to prepare statement: " + std::string(sqlite3_errmsg(mDb));
         LOG_ERROR << mLastError;
         LOG_ERROR << "SQL: " << sql;
-        return IDbConnection::QueryFailed;
+        lazyOrmResult->setQueryState(LazyOrm::QueryFailed);
+        return lazyOrmResult;
     }
 
     const int columnsCount = sqlite3_column_count(mCurrentStmt);
     const bool isSelectQuery = (columnsCount > 0);
-
-    std::shared_ptr<Result> lazyOrmResult = std::make_shared<Result>();
 
     if(isSelectQuery){
 
@@ -163,7 +166,8 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
 
         sqlite3_finalize(mCurrentStmt);
         mCurrentStmt = nullptr;
-        return IDbConnection::QueryFailed;
+        lazyOrmResult->setQueryState(LazyOrm::QueryFailed);
+        return lazyOrmResult;
     }
 
     mAffectedRows = sqlite3_changes(mDb);
@@ -173,7 +177,8 @@ IDbConnection::QueryState SqliteConnection::exec(const SqlTask& task)
     sqlite3_finalize(mCurrentStmt);
     mCurrentStmt = nullptr;
 
-    return IDbConnection::QuerySuccess;
+    lazyOrmResult->setQueryState(LazyOrm::QuerySuccess);
+    return lazyOrmResult;
 }
 
 void SqliteConnection::close()

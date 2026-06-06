@@ -29,7 +29,7 @@ public:
     ~MariadbConnection();
 
     bool connect() override;
-    QueryState exec(const SqlTask &task) override;
+    std::shared_ptr<Result> exec(const SqlTask &task) override;
     void close() override;
     bool healthy() override;
     unsigned long long getLastInsertId() override;
