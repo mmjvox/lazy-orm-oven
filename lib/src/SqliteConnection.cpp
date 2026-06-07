@@ -1,6 +1,6 @@
 #include "SqliteConnection.h"
-#include "LazyVariant/Result.h"
-#include "LazyVariant/ResultRow.h"
+#include "Result.h"
+#include "ResultRow.h"
 #include <trantor/utils/Logger.h>
 
 namespace LazyOrm {

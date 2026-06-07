@@ -6,11 +6,17 @@
 #include "Result.h"
 #include <memory>
 
-#ifdef LIBMARIADB
+
+#if !defined(__has_include)
+#define __has_include(x) 0
+#endif
+
+#if __has_include(<mariadb/mysql.h>)
 #include <mariadb/mysql.h>
 #else
 #include <mysql/mysql.h>
 #endif
+
 
 namespace LazyOrm {
 

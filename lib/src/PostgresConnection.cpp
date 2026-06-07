@@ -1,6 +1,6 @@
 #include "PostgresConnection.h"
-#include "LazyVariant/Result.h"
-#include "LazyVariant/ResultRow.h"
+#include "Result.h"
+#include "ResultRow.h"
 #include <charconv>
 #include <iostream>
 #include <trantor/utils/Logger.h>

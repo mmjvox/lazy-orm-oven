@@ -1,6 +1,6 @@
 #include "MariadbConnection.h"
-#include "LazyVariant/Result.h"
-#include "LazyVariant/ResultRow.h"
+#include "Result.h"
+#include "ResultRow.h"
 #include <iostream>
 #include <trantor/utils/Logger.h>
 
