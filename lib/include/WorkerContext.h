@@ -9,8 +9,7 @@ namespace LazyOrm {
 
 class IDbConnection;
 
-class WorkerContext
-    : private trantor::NonCopyable
+class WorkerContext : private trantor::NonCopyable
 {
 private:
     uint32_t mWorkerId;
@@ -22,6 +21,7 @@ private:
 
 public:
     WorkerContext();
+    ~WorkerContext();
 
     uint32_t workerId() const;
     trantor::EventLoopThread* loopThread() const;

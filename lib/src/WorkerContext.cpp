@@ -1,4 +1,5 @@
 #include "WorkerContext.h"
+#include "IDbConnection.h"
 
 namespace LazyOrm {
 
@@ -7,6 +8,8 @@ WorkerContext::WorkerContext() {
     // mLoopThread = std::make_unique<trantor::EventLoopThread>();
 
 }
+
+WorkerContext::~WorkerContext() = default;
 
 uint32_t WorkerContext::workerId() const
 {
