@@ -32,18 +32,14 @@ void SqlTask::setTransactionId(uint64_t newTransactionId)
     mTransactionId = newTransactionId;
 }
 
-void SqlTask::setSuccess(SuccessCallback* newSuccess)
+void SqlTask::setSuccess(SuccessCallback newSuccess)
 {
-    if(newSuccess!=nullptr){
-        mSuccess = newSuccess;
-    }
+    mSuccess = newSuccess;
 }
 
-void SqlTask::setError(ErrorCallback* newError)
+void SqlTask::setError(ErrorCallback newError)
 {
-    if(newError!=nullptr){
-        mError = newError;
-    }
+    mError = newError;
 }
 
 void SqlTask::setSubmittedAt(std::chrono::steady_clock::time_point newSubmittedAt)
@@ -80,12 +76,12 @@ uint64_t SqlTask::transactionId() const
     return mTransactionId;
 }
 
-SuccessCallback* SqlTask::success() const
+SuccessCallback SqlTask::success() const
 {
     return mSuccess;
 }
 
-ErrorCallback* SqlTask::error() const
+ErrorCallback SqlTask::error() const
 {
     return mError;
 }

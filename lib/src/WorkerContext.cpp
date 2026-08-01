@@ -4,7 +4,7 @@ namespace LazyOrm {
 
 
 WorkerContext::WorkerContext() {
-    mLoopThread = std::make_unique<trantor::EventLoopThread>();
+    // mLoopThread = std::make_unique<trantor::EventLoopThread>();
 
 }
 

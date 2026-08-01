@@ -10,10 +10,10 @@
 
 namespace LazyOrm {
 
-class DbResult;
+class Result;
 class DbException;
 
-using SuccessCallback = std::function<void(DbResult&&)>;
+using SuccessCallback = std::function<void(std::shared_ptr<Result>)>;
 
 using ErrorCallback = std::function<void(const DbException&)>;
 
@@ -33,8 +33,8 @@ private:
     uint32_t mTimeoutMs = 5000;
     bool mTransactional = false;
     uint64_t mTransactionId = 0;
-    SuccessCallback *mSuccess;
-    ErrorCallback *mError;
+    SuccessCallback mSuccess;
+    ErrorCallback mError;
     std::chrono::steady_clock::time_point mSubmittedAt;
     TaskPriority mPriority = TaskPriority::Normal;
 
@@ -46,8 +46,8 @@ public:
     uint32_t timeoutMs() const;
     bool transactional() const;
     uint64_t transactionId() const;
-    SuccessCallback* success() const;
-    ErrorCallback* error() const;
+    SuccessCallback success() const;
+    ErrorCallback error() const;
     std::chrono::steady_clock::time_point submittedAt() const;
     TaskPriority priority() const;
 
@@ -56,8 +56,8 @@ public:
     void setTimeoutMs(uint32_t newTimeoutMs);
     void setTransactional(bool newTransactional);
     void setTransactionId(uint64_t newTransactionId);
-    void setSuccess(SuccessCallback* newSuccess);
-    void setError(ErrorCallback* newError);
+    void setSuccess(SuccessCallback newSuccess);
+    void setError(ErrorCallback newError);
     void setSubmittedAt(std::chrono::steady_clock::time_point newSubmittedAt);
     void setPriority(TaskPriority newPriority);
 };

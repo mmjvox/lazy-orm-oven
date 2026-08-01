@@ -33,7 +33,7 @@ void DbExecutor::start(size_t workerCount){
 uint64_t DbExecutor::submit(SqlTask&& task){
     task.setID(mNextTaskId++);
 
-    auto* callback = new SuccessCallback([](DbResult&& result) {
+    auto callback =  SuccessCallback([](std::shared_ptr<Result> result) {
         // Handle result
     });
 
@@ -49,7 +49,7 @@ uint64_t DbExecutor::submit(SqlTask&& task){
 
             worker->setBusy(true);
 
-            auto result = worker->connection()->exec(task);
+            std::shared_ptr<Result> result = worker->connection()->exec(task);
 
             worker->setExecutedQueries(worker->executedQueries()+1);
 
@@ -62,7 +62,7 @@ uint64_t DbExecutor::submit(SqlTask&& task){
                 {
                     auto successCallback = task.success();
                     if (successCallback) {
-                        (*successCallback)(std::move(result));
+                        successCallback(result);
                     }
                 });
         });
